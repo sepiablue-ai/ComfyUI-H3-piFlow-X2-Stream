@@ -46,20 +46,6 @@ Measured on an RTX 4070 12GB with ComfyUI 0.45.0: same image, prompt and seed 44
 
 Start with the no-conversion route if unsure. The fastest route can be added to the same setup later (the converter also uses the official INT8 model and the adapter).
 
-## Sample videos
-
-Singing an English song (fastest route, 5 s, seed 44):
-
-<!-- TODO: paste GitHub video asset URL (4_sample_english_song.mp4) -->
-
-Running on a beach:
-
-<!-- TODO: paste GitHub video asset URL (5_sample_beach_run.mp4) -->
-
-Sword attack (example of block artifacts during fast motion):
-
-<!-- TODO: paste GitHub video asset URL (6_sample_sword_attack.mp4) -->
-
 ## Strengths and weaknesses
 
 Five other scenes (5 s, seed 44) were generated with the fastest route and reviewed by the author.

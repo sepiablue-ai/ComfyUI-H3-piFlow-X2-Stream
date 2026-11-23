@@ -46,20 +46,6 @@ https://github.com/user-attachments/assets/5247fbfd-5265-466f-8783-c6dc7d6e6a51
 
 迷ったら変換不要版から始めてください。速さが欲しくなったら、同じ環境のまま最速版を追加できます（変換には公式INT8モデルとアダプターも使います）。
 
-## サンプル動画
-
-洋楽を歌う（最速版・5秒・seed44）：
-
-<!-- TODO: paste GitHub video asset URL（4_sample_english_song.mp4） -->
-
-海辺を走る：
-
-<!-- TODO: paste GitHub video asset URL（5_sample_beach_run.mp4） -->
-
-剣で斬り込む（高速な動きでブロック状に崩れる例）：
-
-<!-- TODO: paste GitHub video asset URL（6_sample_sword_attack.mp4） -->
-
 ## 得意・不得意
 
 最速版で別の5シーン（5秒・seed44）を作り、映像と音声を作者が評価しました。
