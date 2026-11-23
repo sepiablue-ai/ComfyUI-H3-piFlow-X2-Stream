@@ -18,13 +18,13 @@ https://github.com/user-attachments/assets/8bc43e9c-f53b-4fb7-8b63-e52604603109
 
 No-conversion route, dynamic LoRA + X2 Stream (35.7 s):
 
-<!-- TODO: paste GitHub video asset URL (2_benchmark_dynamic_lora_35.7s.mp4) -->
+<!-- TODO: paste GitHub video asset URL (2_benchmark_dynamic_lora_35.7s_x264.mp4) -->
 
 Fastest route, Fused + X2 Stream (32.3 s):
 
-<!-- TODO: paste GitHub video asset URL (3_benchmark_fused_32.3s.mp4) -->
+<!-- TODO: paste GitHub video asset URL (3_benchmark_fused_32.3s_x264.mp4) -->
 
-The three videos use the same image, prompt and seed 44 and are shown as generated. The official DWD and the 2-step routes are different models, so the motion differs.
+The three videos use the same image, prompt and seed 44. The first is the official workflow's SaveVideo output (libx264, CRF 18) as is. The other two were saved by X2 Stream with NVENC (CQ 18, about 11 MB), which exceeds GitHub's upload limit, so they were re-encoded for display with the same libx264 CRF 18 as the first. Resolution, frame count and audio are unchanged (the audio is copied), and the re-encoded video differs from the original by PSNR 45.5 dB / SSIM 0.993. The official DWD and the 2-step routes are different models, so the motion differs.
 
 Measured on an RTX 4070 12GB with ComfyUI 0.45.0: same image, prompt and seed 44, second run with the models already loaded, from ComfyUI's `execution_start` to `execution_success`. A new prompt adds the text-encoder conditioning (about 8.6 s) and makes sampling about 2.5 s longer, so five other scenes took 44.2-45.1 s each.
 

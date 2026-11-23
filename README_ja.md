@@ -18,13 +18,13 @@ https://github.com/user-attachments/assets/8bc43e9c-f53b-4fb7-8b63-e52604603109
 
 変換不要版：動的LoRA + X2 Stream（35.7秒）：
 
-<!-- TODO: paste GitHub video asset URL（2_benchmark_dynamic_lora_35.7s.mp4） -->
+<!-- TODO: paste GitHub video asset URL（2_benchmark_dynamic_lora_35.7s_x264.mp4） -->
 
 最速版：Fused + X2 Stream（32.3秒）：
 
-<!-- TODO: paste GitHub video asset URL（3_benchmark_fused_32.3s.mp4） -->
+<!-- TODO: paste GitHub video asset URL（3_benchmark_fused_32.3s_x264.mp4） -->
 
-3本とも同じ画像・プロンプト・seed44で、生成したままの動画です。公式DWDと2stepの2ルートはモデルが違うため、動きも変わります。
+3本とも同じ画像・プロンプト・seed44です。1本目は公式ワークフローのSaveVideo（libx264、CRF 18）で保存したままです。2・3本目はX2 StreamのNVENC保存（CQ 18、約11MB）がGitHubのアップロード上限を超えるため、表示用に1本目と同じlibx264 CRF 18で再エンコードしました。解像度・フレーム数・音声は変えておらず（音声はコピー）、元の動画との差はPSNR 45.5dB・SSIM 0.993です。公式DWDと2stepの2ルートはモデルが違うため、動きも変わります。
 
 数値はRTX 4070 12GB、ComfyUI 0.45.0での実測です（同じ画像・プロンプト・seed44、モデル読込済みの2回目、ComfyUIの`execution_start`から`execution_success`まで）。プロンプトを変えるたびにテキストエンコーダーの条件付け（約8.6秒）が入り、サンプリングも約2.5秒延びるため、別シーン5本では44.2〜45.1秒でした。
 
