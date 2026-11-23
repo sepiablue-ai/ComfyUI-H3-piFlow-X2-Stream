@@ -6,7 +6,9 @@ copied from it. LoRA layers get W_bf16 + B @ A before quantization; the adapter'
 replace the template tensors, as Load LakonLab Adapter does at runtime.
 
 Run it with the Python that belongs to ComfyUI (convert_fused.bat does this). Needs CUDA, comfy-kitchen
-from ComfyUI and ComfyUI-piFlow (for its key map). Peak RAM stays low: tensors are written one by one.
+from ComfyUI and ComfyUI-piFlow (for its key map). Tensors are read with plain file reads (no memory mapping)
+and written one by one, so the process holds about one layer at a time instead of mapping the 40 GB and
+21 GB inputs into memory.
 """
 import argparse
 import hashlib
@@ -40,10 +42,36 @@ def sha256(path):
         return hashlib.file_digest(handle, "sha256").hexdigest()
 
 
-def read_header(path):
-    with open(path, "rb") as handle:
-        size = struct.unpack("<Q", handle.read(8))[0]
-        return json.loads(handle.read(size))
+DTYPES = {"BF16": torch.bfloat16, "F16": torch.float16, "F32": torch.float32, "I8": torch.int8, "U8": torch.uint8}
+
+
+class TensorFile:
+    """Read single tensors from a .safetensors file without mapping the whole file into the process."""
+
+    def __init__(self, path):
+        self.handle = open(path, "rb", buffering=0)
+        size = struct.unpack("<Q", self.handle.read(8))[0]
+        self.header = json.loads(self.handle.read(size))
+        self.metadata = self.header.pop("__metadata__", None) or {}
+        self.base = 8 + size
+
+    def get(self, key):
+        info = self.header[key]
+        start, end = info["data_offsets"]
+        data = bytearray(end - start)
+        self.handle.seek(self.base + start)
+        view, done = memoryview(data), 0
+        while done < len(data):
+            read = self.handle.readinto(view[done:])
+            if not read:
+                raise EOFError(f"{key}: file is truncated")
+            done += read
+        if not data:
+            return torch.empty(info["shape"], dtype=DTYPES[info["dtype"]])
+        return torch.frombuffer(data, dtype=DTYPES[info["dtype"]]).reshape(info["shape"])
+
+    def close(self):
+        self.handle.close()
 
 
 def load_piflow_key_map(comfy_root):
@@ -126,16 +154,14 @@ def tensor_bytes(tensor):
 
 def merge(bf16_path, template_path, adapter_path, output_path, key_map, strength):
     from comfy_kitchen.tensor.int8 import TensorWiseINT8Layout
-    from safetensors import safe_open
 
     device = torch.device("cuda")
-    header = read_header(template_path)
-    metadata = header.pop("__metadata__", {}) or {}
+    template, bf16, adapter_file = TensorFile(template_path), TensorFile(bf16_path), TensorFile(adapter_path)
+    header, metadata = template.header, dict(template.metadata)
     keys = set(header)
-    with safe_open(adapter_path, "pt") as handle:
-        adapter = {key: handle.get_tensor(key) for key in handle.keys()}
-    with safe_open(bf16_path, "pt") as handle:
-        bf16_header = {key: handle.get_slice(key).get_shape() for key in handle.keys()}
+    adapter = {key: adapter_file.get(key) for key in adapter_file.header}
+    adapter_file.close()
+    bf16_header = {key: info["shape"] for key, info in bf16.header.items()}
 
     replaced = {}
     for key, value in adapter.items():
@@ -180,7 +206,7 @@ def merge(bf16_path, template_path, adapter_path, output_path, key_map, strength
     output_path.parent.mkdir(parents=True, exist_ok=True)
     partial = output_path.with_name(output_path.name + ".partial")
     plain_same, started = [], time.time()
-    with safe_open(template_path, "pt") as template, safe_open(bf16_path, "pt") as bf16, open(partial, "wb") as out:
+    with open(partial, "wb") as out:
         out.write(struct.pack("<Q", len(encoded)) + encoded)
         # The INT8 weight and its scale are written separately; quantize a layer when the first of the two is reached.
         parts = {layer + suffix: (layer, suffix) for layer in layers for suffix in (".weight", ".weight_scale")}
@@ -189,17 +215,17 @@ def merge(bf16_path, template_path, adapter_path, output_path, key_map, strength
             if key in parts:
                 layer, suffix = parts[key]
                 if layer not in pending:
-                    quant = json.loads(bytes(template.get_tensor(layer + ".comfy_quant").tolist()).decode())
+                    quant = json.loads(bytes(template.get(layer + ".comfy_quant").tolist()).decode())
                     if quant != QUANT:
                         raise ValueError(f"{layer}: unexpected quantization {quant}")
-                    weight = bf16.get_tensor(layer + ".weight").to(device, torch.float32)
+                    weight = bf16.get(layer + ".weight").to(device, torch.float32)
                     if layer in loras:
                         a, b, fn = loras[layer]
                         delta = strength * (b.to(device, torch.float32) @ a.to(device, torch.float32))
                         weight += fn(delta) if fn is not None else delta
                     q, params = TensorWiseINT8Layout.quantize(weight, per_channel=True, convrot=True, convrot_groupsize=256)
                     if layer not in loras:
-                        plain_same.append((q == template.get_tensor(layer + ".weight").to(device)).float().mean().item())
+                        plain_same.append((q == template.get(layer + ".weight").to(device)).float().mean().item())
                     pending[layer] = {".weight": q.cpu(), ".weight_scale": params.scale.float().reshape(-1, 1).cpu()}
                     finished += 1
                     if finished % 25 == 0:
@@ -210,11 +236,13 @@ def merge(bf16_path, template_path, adapter_path, output_path, key_map, strength
             elif key in replaced:
                 value = replaced[key].to(getattr(torch, {"BF16": "bfloat16", "F16": "float16", "F32": "float32"}[header[key]["dtype"]]))
             else:
-                value = template.get_tensor(key)
+                value = template.get(key)
             data = tensor_bytes(value)
             if len(data) != new_header[key]["data_offsets"][1] - new_header[key]["data_offsets"][0]:
                 raise ValueError(f"{key}: unexpected byte size")
             out.write(data)
+    template.close()
+    bf16.close()
     os.replace(partial, output_path)
     print(f"Plain INT8 layers identical to the official quantization: mean {sum(plain_same) / len(plain_same):.6f}", flush=True)
     print(f"Saved {output_path} ({output_path.stat().st_size / GB:.1f} GB, {time.time() - started:.0f} s)", flush=True)
@@ -248,7 +276,7 @@ def main():
     folder_paths = model_paths(comfy_root, args.extra_model_paths)
     template = args.template or find_model(folder_paths, "diffusion_models", TEMPLATE_NAME)
     adapter = args.adapter or find_model(folder_paths, "loras", ADAPTER_NAME)
-    output = args.output or Path(folder_paths.get_folder_paths("diffusion_models")[0]) / OUTPUT_NAME
+    output = args.output or Path(folder_paths.models_dir) / "diffusion_models" / OUTPUT_NAME
     if output.exists():
         parser.error(f"{output} already exists; delete it or choose another --output")
     if args.bf16:
