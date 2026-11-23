@@ -32,7 +32,7 @@ COMMON_MODELS = {
     "text_encoders": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
     "vae": ("minimax_h3_video_vae_int8_convrot.safetensors", "minimax_h3_audio_vae_fp32.safetensors"),
 }
-X2_INT8 = "MiniMax-H3-X2-Detail-v1-decoder-int8-convrot.safetensors"
+X2_INT8 = os.path.join("h3_x2_stream", "MiniMax-H3-X2-Detail-v1-decoder-int8-convrot.safetensors")
 X2_SOURCE = "MiniMax-H3-X2-Detail-v1.safetensors"
 DYNAMIC_MODELS = {"diffusion_models": "minimax_h3_fl2va_pruned_int8_convrot.safetensors", "loras": "pi_h3_2step_adapter.safetensors"}
 FUSED_MODEL = "minimax_h3_fl2va_pruned_pih3_2step_fused_int8_convrot.safetensors"
