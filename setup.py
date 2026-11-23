@@ -2,6 +2,7 @@
 import argparse
 import asyncio
 import hashlib
+import importlib.util
 import io
 import json
 import os
@@ -114,6 +115,9 @@ def main():
     if sys.prefix == sys.base_prefix and not portable:
         parser.error("Use the existing ComfyUI venv or portable Python; global/system Python is refused")
 
+    if args.install_dependencies and find_package(comfy_root, "comfyui_spark_split.py") is None and importlib.util.find_spec("triton") is None:
+        sys.exit("Spark-H3 needs the Triton build that matches this PyTorch (triton-windows on Windows; "
+                 "PyTorch 2.14 was tested with triton-windows 3.8.0.post28). Install it into this Python first; nothing was changed.")
     packages = {}
     for name, marker, url, prefix, digest in DEPENDENCIES:
         found = find_package(comfy_root, marker)
@@ -122,8 +126,9 @@ def main():
             found = download_package(comfy_root, name, url, prefix, digest)
             if name == "ComfyUI-H3-X2-Stream":
                 pip_install("--no-deps", "-r", str(found / "requirements.txt"))
-            if name == "ComfyUI-Spark-H3":
-                subprocess.run([sys.executable, str(found / "install.py")], check=True)
+            if name == "ComfyUI-Spark-H3" and subprocess.run([sys.executable, str(found / "install.py")]).returncode != 0:
+                shutil.rmtree(found)
+                sys.exit("Spark-H3 install.py failed (see above); its folder was removed so setup can be run again")
         if found is None:
             raise RuntimeError(f"{name} is missing; install it or use --install-dependencies")
         packages[name] = str(found)

@@ -58,6 +58,8 @@ Five other scenes (5 s, seed 44) were generated with the fastest route and revie
 
 Windows with an NVIDIA RTX 40-series GPU (SM89). Developed and tested on an RTX 4070 12GB with ComfyUI 0.45.0, Python 3.13.13, PyTorch 2.14.0+cu130 and comfy-kitchen 0.2.41. Peak VRAM was about 11.6-11.8 GB and peak RAM about 7.3-8.4 GB while generating. Measured with Dynamic VRAM enabled and `--disable-pinned-memory`. Other GPUs, operating systems or models may give different speed and quality.
 
+Spark-H3 needs the Triton build that matches PyTorch (`triton-windows` on Windows; tested with 3.8.0.post28 for PyTorch 2.14). Without it, setup stops before changing anything.
+
 Spark-H3 0.2.0 officially supports ComfyUI 0.38-0.40 and 0.42-0.44. This repo was tested on 0.45.0 and worked.
 
 This repo contains no custom nodes: only workflows, the converter and the setup batch files. The workflows use ComfyUI native nodes and these three packs.

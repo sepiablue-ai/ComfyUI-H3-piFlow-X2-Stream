@@ -58,6 +58,8 @@
 
 WindowsとNVIDIA RTX 40シリーズ（SM89）向けです。開発検証はRTX 4070 12GB、ComfyUI 0.45.0、Python 3.13.13、PyTorch 2.14.0+cu130、comfy-kitchen 0.2.41で行いました。生成時のPeak VRAMは約11.6〜11.8GB、Peak RAMは約7.3〜8.4GBでした。実測はDynamic VRAM有効、`--disable-pinned-memory`で行いました。他のGPU・OS・モデルで同じ速度や品質を保証するものではありません。
 
+Spark-H3にはPyTorchに合ったTriton（Windowsでは`triton-windows`。PyTorch 2.14では3.8.0.post28で検証）が必要です。入っていなければsetupは何も変更せずに止まります。
+
 Spark-H3 0.2.0の公式対応はComfyUI 0.38〜0.40、0.42〜0.44です。このrepoの検証は0.45.0で行い、問題なく動きました。
 
 このrepoにカスタムノードはありません。ワークフロー、変換スクリプト、導入用の`.bat`だけです。使うノードは次の3つのパックとComfyUI標準ノードです。
