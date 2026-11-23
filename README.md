@@ -2,7 +2,7 @@
 
 English | [日本語](README_ja.md)
 
-**A 5 s video with audio at 1088x1920 in 32.3 s on an RTX 4070 12GB.**
+**A 5 s video with audio at 1088x1920 in 32.3 s on an RTX 4070 12GB** (60.6 s on an RTX 3060 12GB; supports RTX 30 / 40 / 50 series).
 
 Workflows that combine [pi-H3](https://huggingface.co/Lakonik/pi-H3) (a pi-Flow adapter that distills MiniMax H3 FL2VA to 2 steps) with the sparse attention of [Spark-H3](https://github.com/zechengtang/Spark-H3) and the INT8 X2 VAE and NVENC saving of [ComfyUI-H3-X2-Stream](https://github.com/sepiablue-ai/ComfyUI-H3-X2-Stream). The video is sampled at 544x960 in 2 steps and saved at 1088x1920 through the X2 VAE.
 
@@ -38,7 +38,7 @@ Measured on an RTX 4070 12GB with ComfyUI 0.45.0: same image, prompt and seed 44
 
 | | No conversion (35.7 s) | Fastest, Fused (32.3 s) |
 |---|---|---|
-| Workflow | [piH3_2step_dynamic_x2_5s.json](workflows/piH3_2step_dynamic_x2_5s.json) | [piH3_2step_fused_x2_5s.json](workflows/piH3_2step_fused_x2_5s.json) |
+| Workflow | `piH3_2step_dynamic_x2_5s_<arch>.json` | `piH3_2step_fused_x2_5s_<arch>.json` |
 | Diffusion model | Official `minimax_h3_fl2va_pruned_int8_convrot` (21.0 GB) + `pi_h3_2step_adapter` (503 MB) | `minimax_h3_fl2va_pruned_pih3_2step_fused_int8_convrot` (21.0 GB), built by the converter |
 | Preparation | Place the models | Run `convert_fused.bat` once (about 2.5 min plus the BF16 download) |
 | Temporary free space | None | 40.2 GB for the BF16 source + 21.0 GB output. The BF16 file can be deleted afterwards |
@@ -64,7 +64,28 @@ Five other scenes (5 s, seed 44) were generated with the fastest route and revie
 
 ## Requirements
 
-Windows with an NVIDIA RTX 40-series GPU (SM89). Developed and tested on an RTX 4070 12GB with ComfyUI 0.45.0, Python 3.13.13, PyTorch 2.14.0+cu130 and comfy-kitchen 0.2.41. Peak VRAM was about 11.6-11.8 GB and peak RAM about 7.3-8.4 GB while generating. Measured with Dynamic VRAM enabled and `--disable-pinned-memory`. Other GPUs, operating systems or models may give different speed and quality.
+Windows with an NVIDIA RTX 30, 40 or 50-series GPU. Spark-H3 ships a separate build per GPU generation, so the workflows are provided per generation as well.
+
+| GPU | Compute capability | Spark-H3 node | Workflows | Status |
+|---|---|---|---|---|
+| RTX 30 series | SM86 | MiniMaxH3SparkAttentionSM86 | [workflows/sm86](workflows/sm86) | Measured on an RTX 3060 12GB |
+| RTX 40 series | SM89 | MiniMaxH3SparkAttentionSM89 | [workflows/sm89](workflows/sm89) | Measured on an RTX 4070 12GB (development setup) |
+| RTX 50 series | SM120 | MiniMaxH3SparkAttentionSM120 | [workflows/sm120](workflows/sm120) | **Not tested on hardware; not guaranteed to work** |
+
+The RTX 50-series (SM120) support only switches to the official Spark-H3 SM120 archive and node name. No RTX 50 GPU was available, so it has never been run.
+
+Developed and tested on an RTX 4070 12GB with ComfyUI 0.45.0, Python 3.13.13, PyTorch 2.14.0+cu130 and comfy-kitchen 0.2.41. Peak VRAM was about 11.6-11.8 GB and peak RAM about 7.3-8.4 GB while generating. Measured with Dynamic VRAM enabled and `--disable-pinned-memory`. Other GPUs, operating systems or models may give different speed and quality.
+
+### Measured on an RTX 3060 12GB
+
+Same image and prompt, 5 s at 1088x1920 with audio, seed 44 run after seed 43 (models already loaded), from ComfyUI's `execution_start` to `execution_success`.
+
+| Route | Seed 44 (models loaded) | For reference: RTX 4070 | Peak VRAM | Peak RAM |
+|---|---:|---:|---:|---:|
+| No conversion | 67.0 s | 35.7 s | 11.2 GB | 7.0 GB |
+| Fastest, Fused | 60.6 s | 32.3 s | 11.5 GB | 7.1 GB |
+
+The first run after starting ComfyUI (seed 43, including model loading) took 93.3 s for the no-conversion route and 64.4 s for Fused (including switching from the no-conversion model). Peak VRAM is the whole-GPU usage from `nvidia-smi`; peak RAM is the largest working set of the ComfyUI process. Neither video showed visual breakage; the audio was not listened to.
 
 Spark-H3 needs the Triton build that matches PyTorch (`triton-windows` on Windows; tested with 3.8.0.post28 for PyTorch 2.14). Without it, setup stops before changing anything.
 
@@ -75,7 +96,7 @@ This repo contains no custom nodes: only workflows, the converter and the setup 
 | Pack | Used for | Version fetched by setup |
 |---|---|---|
 | [ComfyUI-piFlow](https://github.com/Lakonik/ComfyUI-piFlow) | Load LakonLab Adapter, pi-Flow Scheduler | commit `e0ca46f7a7dcd080d8ab1d759719e8bc046617f0` |
-| [Spark-H3](https://github.com/zechengtang/Spark-H3) | MiniMaxH3SparkAttentionSM89 | Release `comfyui-v0.2.0`, Windows SM89 cu130 archive (SHA-256 checked) |
+| [Spark-H3](https://github.com/zechengtang/Spark-H3) | MiniMaxH3SparkAttentionSM86 / SM89 / SM120 | Release `comfyui-v0.2.0`, the Windows cu130 archive for your GPU generation (SHA-256 checked) |
 | [ComfyUI-H3-X2-Stream](https://github.com/sepiablue-ai/ComfyUI-H3-X2-Stream) | H3X2ChunkFeedForward, H3X2StreamSave, INT8 X2 VAE preparation | commit `e05e79ab3242abaafddd673e88e19c1824cd863c` |
 
 ## Installation
@@ -89,6 +110,14 @@ setup.bat "C:\ComfyUI\ComfyUI" "C:\ComfyUI\.venv\Scripts\python.exe" --install-d
 ```
 
 Without the Python argument, setup looks for the Portable Python, `.venv` and `venv` of that ComfyUI and needs exactly one candidate. A global Python is refused. Setup fetches only missing packs at the versions above, and Spark-H3 installs its GPU wheel with its own `install.py`. Existing packs are not updated. ComfyUI itself and PyTorch are not changed and no model is downloaded. Setup copies the sample image to `ComfyUI/input/`, checks node registration and model placement, and reports which route is ready.
+
+The Spark-H3 generation (SM86 / SM89 / SM120) is detected from the compute capability of the GPUs this Python can see. With GPUs of different generations installed, choose one with `--arch` (without it, setup stops before changing anything):
+
+```bat
+setup.bat "C:\ComfyUI\ComfyUI" "C:\ComfyUI\.venv\Scripts\python.exe" --install-dependencies --arch sm86
+```
+
+One ComfyUI can hold only one Spark-H3 generation. An `--arch` that differs from the installed Spark-H3 stops setup before changing anything. At the end, setup prints the node name and the workflow folder for that generation.
 
 If the same packs were installed with ComfyUI-Manager, run setup without `--install-dependencies`. Packs are found by their contents, whatever the folder name, so nothing is installed twice.
 
@@ -135,7 +164,7 @@ The 50 layers without LoRA matched the official INT8 weights to 99.9999%, which 
 
 ## Using it in ComfyUI
 
-1. Drag [piH3_2step_dynamic_x2_5s.json](workflows/piH3_2step_dynamic_x2_5s.json) (no conversion) or [piH3_2step_fused_x2_5s.json](workflows/piH3_2step_fused_x2_5s.json) (fastest) into ComfyUI. API versions are in [workflows/api](workflows/api).
+1. From the folder for your GPU generation ([workflows/sm86](workflows/sm86) for RTX 30, [workflows/sm89](workflows/sm89) for RTX 40, [workflows/sm120](workflows/sm120) for RTX 50), drag `piH3_2step_dynamic_x2_5s_<arch>.json` (no conversion) or `piH3_2step_fused_x2_5s_<arch>.json` (fastest) into ComfyUI. API versions are in each folder's `api`. The three generations differ only in the Spark-H3 node name; all settings are the same. A workflow for another generation reports the Spark-H3 node as missing.
 2. Choose an image in LoadImage and edit the prompt in MiniMaxH3ImageToVideo.
 3. ImageScale (lanczos, crop=center) fits the image to 544x960. Images with another aspect ratio are center-cropped (a 1248x1824 image loses about 17% of its width in total). To change the resolution, set the same multiples of 32 in ImageScale and MiniMaxH3ImageToVideo.
 4. `length` sets the duration (5 s = 124 frames). Longer than 5 s is not recommended ([Strengths and weaknesses](#strengths-and-weaknesses)).
@@ -150,6 +179,12 @@ On 2026-11-23, installation and generation were checked from a separate clone of
 - `convert_fused.bat` downloaded the BF16 model (40.2 GB, SHA-256 matched) and converted it in 147 s with a peak of 2.7 GB of process memory. All 932 output tensors were identical to the fused model used for the benchmarks.
 - Both workflows were loaded in UI format and ran successfully. Seed 44 with models loaded: fastest route 32.1 s, no-conversion route 36.9 s (64.1 s on the first run, including model loading). Reruns in the same environment gave identical outputs; the difference from the benchmark environment's videos was PSNR 46.4 dB.
 - Deleting the BF16 file with `--delete-bf16` was not exercised in this test. The INT8 X2 VAE was already prepared, so `00_prepare_int8.json` was not run. Dragging in a browser was replaced by the workflow loading call (`loadGraphData`).
+
+On the same day, RTX 30-series support was checked on an RTX 3060 12GB (the second GPU of the same PC as the RTX 4070), with a newly built ComfyUI and venv at the same versions as above and ComfyUI started with only the RTX 3060 visible.
+
+- `setup.bat --install-dependencies` with both GPUs visible and no `--arch` reported GPUs of different generations and stopped before changing anything. With `--arch sm86` it installed the SM86 archive (SHA-256 matched) and the SM86 wheel, and reported all nodes registered and both routes ready. `--arch sm89` on the installed SM86 build stopped, and `--check` with only the RTX 3060 visible detected SM86 and passed.
+- Both API workflows in `workflows/sm86/api` ran successfully (Spark-H3 active on SM86, no fallback). Times are in [Measured on an RTX 3060 12GB](#measured-on-an-rtx-3060-12gb). For the two UI workflows, every node type was checked against the registered nodes (they were not run from the UI).
+- For the RTX 50 series (SM120), only the archive SHA-256 and the node name were checked against the release contents; it was not run on hardware.
 
 ## Author and related repositories
 

@@ -22,12 +22,20 @@ DEPENDENCIES = (
     ("ComfyUI-piFlow", "lakonlab_loaders.py",
      "https://codeload.github.com/Lakonik/ComfyUI-piFlow/zip/e0ca46f7a7dcd080d8ab1d759719e8bc046617f0",
      "ComfyUI-piFlow-e0ca46f7a7dcd080d8ab1d759719e8bc046617f0/", None),
-    ("ComfyUI-Spark-H3", "comfyui_spark_split.py",
-     "https://github.com/zechengtang/Spark-H3/releases/download/comfyui-v0.2.0/ComfyUI-Spark-H3-0.2.0-windows-x86_64-sm89-cu130.zip",
-     "ComfyUI-Spark-H3/", "d610d19859fffe0eda69f0075749c4b4c1f5cd0ff0bc4967cbfac3466e007391"),
+    ("ComfyUI-Spark-H3", "comfyui_spark_split.py", None, "ComfyUI-Spark-H3/", None),  # URL and SHA-256 from SPARK_ARCHIVES
 )
+SPARK_RELEASE = "https://github.com/zechengtang/Spark-H3/releases/download/comfyui-v0.2.0/"
+# Official Windows cu130 archives of Spark-H3 comfyui-v0.2.0, one per GPU generation
+SPARK_ARCHIVES = {
+    "sm86": ((8, 6), "ComfyUI-Spark-H3-0.2.0-windows-x86_64-sm86-cu130.zip",
+             "83e2455162ff7e9550c6fdcbda5534c7768dbecf60593cbb3223deeb7fe6c5d1"),
+    "sm89": ((8, 9), "ComfyUI-Spark-H3-0.2.0-windows-x86_64-sm89-cu130.zip",
+             "d610d19859fffe0eda69f0075749c4b4c1f5cd0ff0bc4967cbfac3466e007391"),
+    "sm120": ((12, 0), "ComfyUI-Spark-H3-0.2.0-windows-x86_64-sm120-cu130.zip",
+              "87034b19523bd02090bb54f7fae1f872ff5edbff9b60ec8ae1de93938ef8ca23"),
+}
 NODES = ("MiniMaxH3ImageToVideo", "MiniMaxH3SigmaShift", "SamplerCustomAdvanced", "BasicGuider", "VAEDecodeAudio",
-         "Load LakonLab Adapter", "pi-Flow Scheduler", "MiniMaxH3SparkAttentionSM89", "H3X2ChunkFeedForward", "H3X2StreamSave")
+         "Load LakonLab Adapter", "pi-Flow Scheduler", "H3X2ChunkFeedForward", "H3X2StreamSave")
 COMMON_MODELS = {
     "text_encoders": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
     "vae": ("minimax_h3_video_vae_int8_convrot.safetensors", "minimax_h3_audio_vae_fp32.safetensors"),
@@ -45,6 +53,44 @@ def sha(path):
 
 def find_package(comfy_root, marker):
     return next((path for path in sorted((comfy_root / "custom_nodes").iterdir()) if (path / marker).is_file()), None)
+
+
+def visible_gpus():
+    """(CUDA_VISIBLE_DEVICES entry, name, architecture or None, SMxx) for each GPU this Python can see."""
+    import torch
+    if not torch.cuda.is_available():
+        return []
+    entries = [item.strip() for item in os.environ.get("CUDA_VISIBLE_DEVICES", "").split(",") if item.strip()]
+    by_capability = {capability: arch for arch, (capability, _, _) in SPARK_ARCHIVES.items()}
+    gpus = []
+    for index in range(torch.cuda.device_count()):
+        capability = tuple(torch.cuda.get_device_capability(index))
+        gpus.append((entries[index] if index < len(entries) else str(index), torch.cuda.get_device_name(index),
+                     by_capability.get(capability), "SM%d%d" % capability))
+    return gpus
+
+
+def installed_architecture(package):
+    build = package / "spark_h3_build.json" if package else None
+    if build is None or not build.is_file():
+        return None
+    return json.loads(build.read_text(encoding="utf-8")).get("architecture")
+
+
+def select_architecture(requested, installed, gpus):
+    if installed and requested and installed != requested:
+        sys.exit(f"Spark-H3 for {installed.upper()} is already installed in this ComfyUI; --arch {requested} does not "
+                 "match. One ComfyUI can hold only one Spark-H3 build. Nothing was changed.")
+    if requested or installed:
+        return requested or installed
+    found = sorted({gpu[2] for gpu in gpus if gpu[2]})
+    if not found:
+        seen = ", ".join(f"{gpu[1]} ({gpu[3]})" for gpu in gpus) or "no CUDA GPU"
+        sys.exit(f"No supported GPU found (SM86 / SM89 / SM120); this Python sees {seen}. Nothing was changed.")
+    if len(found) > 1:
+        sys.exit("GPUs of different generations are visible (" + ", ".join(a.upper() for a in found) +
+                 "); choose one with --arch sm86|sm89|sm120. Nothing was changed.")
+    return found[0]
 
 
 def download_package(comfy_root, name, url, prefix, digest):
@@ -101,7 +147,10 @@ def main():
     parser.add_argument("--comfy-root", type=Path)
     parser.add_argument("--check", action="store_true", help="Read-only environment and model check")
     parser.add_argument("--install-dependencies", action="store_true",
-                        help="Install missing X2 Stream, ComfyUI-piFlow and Spark-H3 (Windows SM89) into this dedicated Python")
+                        help="Install missing X2 Stream, ComfyUI-piFlow and Spark-H3 (Windows) into this dedicated Python")
+    parser.add_argument("--arch", choices=tuple(SPARK_ARCHIVES),
+                        help="Spark-H3 build: sm86 (RTX 30), sm89 (RTX 40) or sm120 (RTX 50). Detected from the GPU "
+                             "when omitted; required when GPUs of different generations are visible")
     parser.add_argument("--extra-model-paths", type=Path, help="Additional native ComfyUI model-path YAML")
     args = parser.parse_args()
     if args.check and args.install_dependencies:
@@ -116,20 +165,35 @@ def main():
     if sys.prefix == sys.base_prefix and not portable:
         parser.error("Use the existing ComfyUI venv or portable Python; global/system Python is refused")
 
-    if args.install_dependencies and find_package(comfy_root, "comfyui_spark_split.py") is None and importlib.util.find_spec("triton") is None:
+    spark_package = find_package(comfy_root, "comfyui_spark_split.py")
+    if args.install_dependencies and spark_package is None and importlib.util.find_spec("triton") is None:
         sys.exit("Spark-H3 needs the Triton build that matches this PyTorch (triton-windows on Windows; "
                  "PyTorch 2.14 was tested with triton-windows 3.8.0.post28). Install it into this Python first; nothing was changed.")
+    gpus = visible_gpus()
+    architecture = select_architecture(args.arch, installed_architecture(spark_package), gpus)
+    matching = [gpu for gpu in gpus if gpu[2] == architecture]
+    if args.install_dependencies and spark_package is None and not matching:
+        sys.exit(f"Installing Spark-H3 {architecture.upper()} needs a visible {architecture.upper()} GPU; "
+                 "none was found. Nothing was changed.")
+    _, spark_archive, spark_digest = SPARK_ARCHIVES[architecture]
+    print(f"Spark-H3 architecture: {architecture.upper()}" + (f" ({matching[0][1]})" if matching else
+          " (no matching GPU visible; the Spark node will refuse to run on this PC)"), flush=True)
     packages = {}
     for name, marker, url, prefix, digest in DEPENDENCIES:
+        if name == "ComfyUI-Spark-H3":
+            url, digest = SPARK_RELEASE + spark_archive, spark_digest
         found = find_package(comfy_root, marker)
         if found is None and args.install_dependencies:
             print(f"Installing {name} ...", flush=True)
             found = download_package(comfy_root, name, url, prefix, digest)
             if name == "ComfyUI-H3-X2-Stream":
                 pip_install("--no-deps", "-r", str(found / "requirements.txt"))
-            if name == "ComfyUI-Spark-H3" and subprocess.run([sys.executable, str(found / "install.py")]).returncode != 0:
-                shutil.rmtree(found)
-                sys.exit("Spark-H3 install.py failed (see above); its folder was removed so setup can be run again")
+            if name == "ComfyUI-Spark-H3":
+                # install.py checks the current CUDA device, so let it see only a GPU of the selected generation
+                environment = dict(os.environ, CUDA_VISIBLE_DEVICES=matching[0][0])
+                if subprocess.run([sys.executable, str(found / "install.py")], env=environment).returncode != 0:
+                    shutil.rmtree(found)
+                    sys.exit("Spark-H3 install.py failed (see above); its folder was removed so setup can be run again")
         if found is None:
             raise RuntimeError(f"{name} is missing; install it or use --install-dependencies")
         packages[name] = str(found)
@@ -149,7 +213,8 @@ def main():
         load_extra_path_config(str(args.extra_model_paths.resolve()))
     import nodes
     asyncio.run(nodes.init_extra_nodes(init_custom_nodes=True, init_api_nodes=False))
-    missing_nodes = [name for name in NODES if name not in nodes.NODE_CLASS_MAPPINGS]
+    spark_node = "MiniMaxH3SparkAttention" + architecture.upper()
+    missing_nodes = [name for name in NODES + (spark_node,) if name not in nodes.NODE_CLASS_MAPPINGS]
     if missing_nodes:
         raise RuntimeError("Nodes not registered (check the ComfyUI log above): " + ", ".join(missing_nodes))
 
@@ -178,6 +243,8 @@ def main():
     ready = not missing and (routes["dynamic"] or routes["fused"])
     print(json.dumps({"status": ("check_passed" if args.check else "installed") if ready else "models_missing",
                       "python": sys.executable, "comfy_root": str(comfy_root), "packages": packages,
+                      "spark_architecture": architecture, "spark_node": spark_node,
+                      "workflows": str(ROOT / "workflows" / architecture),
                       "x2_int8_decoder": x2 or "not prepared yet: run examples/00_prepare_int8.json of ComfyUI-H3-X2-Stream once",
                       "routes_ready": routes, "missing_common_models": missing, "models": models,
                       "video_generations": 0, "model_downloads": 0, "core_files_changed": False}, ensure_ascii=True, indent=2))

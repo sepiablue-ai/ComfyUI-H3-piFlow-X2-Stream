@@ -2,7 +2,7 @@
 
 [English](README.md) | 日本語
 
-**RTX 4070 12GBで、音声付きの5秒動画（1088×1920）を32.3秒で生成できます。**
+**RTX 4070 12GBで、音声付きの5秒動画（1088×1920）を32.3秒で生成できます。**（RTX 3060 12GBでは60.6秒。対応GPUはRTX 30 / 40 / 50シリーズ）
 
 [pi-H3](https://huggingface.co/Lakonik/pi-H3)（pi-Flowで2stepに蒸留したMiniMax H3 FL2VA用アダプター）を、[Spark-H3](https://github.com/zechengtang/Spark-H3)のsparse attentionと[ComfyUI-H3-X2-Stream](https://github.com/sepiablue-ai/ComfyUI-H3-X2-Stream)のINT8 X2 VAE・NVENC保存で組み合わせたワークフロー集です。544×960を2stepで生成し、X2 VAEで1088×1920に拡大して保存します。
 
@@ -38,7 +38,7 @@ https://github.com/user-attachments/assets/5247fbfd-5265-466f-8783-c6dc7d6e6a51
 
 | | 変換不要版（35.7秒） | 最速版 Fused（32.3秒） |
 |---|---|---|
-| ワークフロー | [piH3_2step_dynamic_x2_5s.json](workflows/piH3_2step_dynamic_x2_5s.json) | [piH3_2step_fused_x2_5s.json](workflows/piH3_2step_fused_x2_5s.json) |
+| ワークフロー | `piH3_2step_dynamic_x2_5s_<世代>.json` | `piH3_2step_fused_x2_5s_<世代>.json` |
 | 拡散モデル | 公式 `minimax_h3_fl2va_pruned_int8_convrot`（21.0GB）＋ `pi_h3_2step_adapter`（503MB） | 変換で作る `minimax_h3_fl2va_pruned_pih3_2step_fused_int8_convrot`（21.0GB） |
 | 準備 | モデルを置くだけ | `convert_fused.bat`で1回変換（約2.5分＋BF16のダウンロード） |
 | 一時的に必要な空き容量 | なし | BF16元モデル40.2GB＋出力21.0GB。変換後にBF16は削除できます |
@@ -64,7 +64,28 @@ https://github.com/user-attachments/assets/5247fbfd-5265-466f-8783-c6dc7d6e6a51
 
 ## 必要な環境
 
-WindowsとNVIDIA RTX 40シリーズ（SM89）向けです。開発検証はRTX 4070 12GB、ComfyUI 0.45.0、Python 3.13.13、PyTorch 2.14.0+cu130、comfy-kitchen 0.2.41で行いました。生成時のPeak VRAMは約11.6〜11.8GB、Peak RAMは約7.3〜8.4GBでした。実測はDynamic VRAM有効、`--disable-pinned-memory`で行いました。他のGPU・OS・モデルで同じ速度や品質を保証するものではありません。
+WindowsとNVIDIA RTX 30 / 40 / 50シリーズ向けです。Spark-H3はGPUの世代ごとに別ビルドなので、ワークフローも世代別に用意しています。
+
+| GPU | Compute Capability | Spark-H3のノード | ワークフロー | 検証状況 |
+|---|---|---|---|---|
+| RTX 30シリーズ | SM86 | MiniMaxH3SparkAttentionSM86 | [workflows/sm86](workflows/sm86) | RTX 3060 12GBで実測 |
+| RTX 40シリーズ | SM89 | MiniMaxH3SparkAttentionSM89 | [workflows/sm89](workflows/sm89) | RTX 4070 12GBで実測（開発環境） |
+| RTX 50シリーズ | SM120 | MiniMaxH3SparkAttentionSM120 | [workflows/sm120](workflows/sm120) | **実機未検証・動作は保証しません** |
+
+RTX 50シリーズ（SM120）用は、Spark-H3公式のSM120版アーカイブとノード名を差し替えたワークフローを用意しただけで、手元に実機がないため一度も動かしていません。
+
+開発検証はRTX 4070 12GB、ComfyUI 0.45.0、Python 3.13.13、PyTorch 2.14.0+cu130、comfy-kitchen 0.2.41で行いました。生成時のPeak VRAMは約11.6〜11.8GB、Peak RAMは約7.3〜8.4GBでした。実測はDynamic VRAM有効、`--disable-pinned-memory`で行いました。他のGPU・OS・モデルで同じ速度や品質を保証するものではありません。
+
+### RTX 3060 12GBでの実測
+
+同じ画像・プロンプト、5秒・1088×1920・音声付き、seed43を流したあとのseed44（モデル読込済み）。ComfyUIの`execution_start`から`execution_success`まで。
+
+| ルート | seed44（モデル読込済み） | 参考：RTX 4070 | Peak VRAM | Peak RAM |
+|---|---:|---:|---:|---:|
+| 変換不要版 | 67.0秒 | 35.7秒 | 11.2GB | 7.0GB |
+| 最速版 Fused | 60.6秒 | 32.3秒 | 11.5GB | 7.1GB |
+
+ComfyUI起動直後の1本目（seed43、モデル読込込み）は変換不要版93.3秒、Fused 64.4秒（変換不要版からの切り替え読込を含む）でした。Peak VRAMは`nvidia-smi`のGPU全体の使用量、Peak RAMはComfyUIのプロセスの最大ワーキングセットです。2本とも映像に破綻はありませんでしたが、音声の試聴はしていません。
 
 Spark-H3にはPyTorchに合ったTriton（Windowsでは`triton-windows`。PyTorch 2.14では3.8.0.post28で検証）が必要です。入っていなければsetupは何も変更せずに止まります。
 
@@ -75,7 +96,7 @@ Spark-H3 0.2.0の公式対応はComfyUI 0.38〜0.40、0.42〜0.44です。この
 | パック | 用途 | setupが取得する版 |
 |---|---|---|
 | [ComfyUI-piFlow](https://github.com/Lakonik/ComfyUI-piFlow) | Load LakonLab Adapter、pi-Flow Scheduler | commit `e0ca46f7a7dcd080d8ab1d759719e8bc046617f0` |
-| [Spark-H3](https://github.com/zechengtang/Spark-H3) | MiniMaxH3SparkAttentionSM89 | Release `comfyui-v0.2.0` のWindows SM89 cu130版（SHA-256確認） |
+| [Spark-H3](https://github.com/zechengtang/Spark-H3) | MiniMaxH3SparkAttentionSM86 / SM89 / SM120 | Release `comfyui-v0.2.0` のWindows cu130版から、GPUの世代に合うもの1つ（SHA-256確認） |
 | [ComfyUI-H3-X2-Stream](https://github.com/sepiablue-ai/ComfyUI-H3-X2-Stream) | H3X2ChunkFeedForward、H3X2StreamSave、X2 VAEのINT8化 | commit `e05e79ab3242abaafddd673e88e19c1824cd863c` |
 
 ## 導入
@@ -89,6 +110,14 @@ setup.bat "C:\ComfyUI\ComfyUI" "C:\ComfyUI\.venv\Scripts\python.exe" --install-d
 ```
 
 専用Pythonを省略すると、そのComfyUIのPortable Python、`.venv`、`venv`を探します。候補が1つでなければ明示指定が必要です。グローバルPythonは拒否します。setupは未導入のパックだけを上の版で取得し、Spark-H3は同梱の`install.py`でGPU用のwheelを入れます。既存のパックは更新しません。ComfyUI本体やPyTorchは更新せず、モデルもダウンロードしません。サンプル画像を`ComfyUI/input/`へコピーし、ノードの登録とモデルの配置を確認して、どちらのルートが使えるかを表示します。
+
+Spark-H3の世代（SM86 / SM89 / SM120）は、そのPythonから見えるGPUのCompute Capabilityで自動判定します。世代の違うGPUを複数積んでいる場合は、`--arch`で指定してください（指定しないと何も変更せずに止まります）。
+
+```bat
+setup.bat "C:\ComfyUI\ComfyUI" "C:\ComfyUI\.venv\Scripts\python.exe" --install-dependencies --arch sm86
+```
+
+1つのComfyUIに入れられるSpark-H3は1世代分だけです。すでに入っているSpark-H3と違う`--arch`を指定すると、何も変更せずに止まります。setupの最後に、使う世代のノード名とワークフローのフォルダを表示します。
 
 ComfyUI-Managerで同じパックを入れている場合は、`--install-dependencies`を付けずに実行してください。フォルダ名が違っても、中身で見つけて二重に入れません。
 
@@ -135,7 +164,7 @@ LoRAの当たらない50層は、公式INT8と99.9999%一致しました（公�
 
 ## ComfyUIで使う
 
-1. [piH3_2step_dynamic_x2_5s.json](workflows/piH3_2step_dynamic_x2_5s.json)（変換不要版）か[piH3_2step_fused_x2_5s.json](workflows/piH3_2step_fused_x2_5s.json)（最速版）をComfyUIへドラッグします。API版は[workflows/api](workflows/api)です。
+1. GPUの世代のフォルダ（RTX 30は[workflows/sm86](workflows/sm86)、RTX 40は[workflows/sm89](workflows/sm89)、RTX 50は[workflows/sm120](workflows/sm120)）から、`piH3_2step_dynamic_x2_5s_<世代>.json`（変換不要版）か`piH3_2step_fused_x2_5s_<世代>.json`（最速版）をComfyUIへドラッグします。API版は各フォルダの`api`にあります。3世代の違いはSpark-H3のノード名だけで、設定値は同じです。別世代のワークフローを読み込むと、Spark-H3のノードが見つからないと表示されます。
 2. LoadImageで画像を選び、MiniMaxH3ImageToVideoのプロンプトを変更します。
 3. 画像はImageScale（lanczos、crop=center）で544×960に合わせます。縦横比が違う画像は中央で切り抜かれます（例：1248×1824の画像は横幅の約17%が切れます。左右それぞれ約8.6%）。解像度を変える場合は、ImageScaleとMiniMaxH3ImageToVideoのwidth・heightを同じ32の倍数にします。
 4. 長さは`length`（5秒＝124フレーム）です。5秒より長い動画は非推奨です（[得意・不得意](#得意不得意)）。
@@ -150,6 +179,12 @@ LoRAの当たらない50層は、公式INT8と99.9999%一致しました（公�
 - `convert_fused.bat`：BF16のダウンロード（40.2GB、SHA-256一致）と変換が成功。変換は147秒、変換プロセスの最大メモリは2.7GBでした。出力の932テンソルはすべて、ベンチマークに使ったFusedモデルと完全に一致しました。
 - 2本のワークフローをUI形式のままComfyUIに読み込んで実行し、どちらも成功。seed44・モデル読込済みで、最速版32.1秒、変換不要版36.9秒（初回はモデル読込を含め64.1秒）。同じ環境での再実行は出力が完全一致し、ベンチマーク環境の動画との差はPSNR 46.4dBでした。
 - BF16の`--delete-bf16`による削除は、この試験では実行していません。X2 VAEのINT8版は準備済みのものを使い、`00_prepare_int8.json`は実行していません。ブラウザーでのドラッグ操作は、ワークフローを読み込む処理（`loadGraphData`）で代替しました。
+
+同じ日に、RTX 30シリーズ対応をRTX 3060 12GB（RTX 4070と同じPCの2枚目）で確認しました。上と同じ版で新しく作ったComfyUIとvenvを使い、ComfyUIはRTX 3060だけが見える状態で起動しました。
+
+- `setup.bat --install-dependencies`：2枚のGPUが見える状態で`--arch`なしだと「世代の違うGPUがある」と表示して何も変更せずに停止。`--arch sm86`でSM86版のアーカイブ（SHA-256一致）とSM86 wheelを導入し、全ノードの登録と両ルートの準備完了を確認。導入済みのSM86に`--arch sm89`を指定すると停止し、RTX 3060だけが見える状態の`--check`はSM86を自動判定して合格しました。
+- `workflows/sm86/api`の2本をAPIで実行し、どちらも成功（Spark-H3はSM86で動作し、別の処理への切り替えなし）。時間は[RTX 3060 12GBでの実測](#rtx-3060-12gbでの実測)のとおりです。UI版2本は、使っているノードがすべて登録済みであることを照合しました（UIでの実行はしていません）。
+- RTX 50シリーズ（SM120）用は、アーカイブのSHA-256とノード名をリリースの中身で確認しただけで、実機では動かしていません。
 
 ## 作者・関連リポジトリ
 
