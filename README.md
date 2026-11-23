@@ -76,17 +76,6 @@ The RTX 50-series (SM120) support only switches to the official Spark-H3 SM120 a
 
 Developed and tested on an RTX 4070 12GB with ComfyUI 0.45.0, Python 3.13.13, PyTorch 2.14.0+cu130 and comfy-kitchen 0.2.41. Peak VRAM was about 11.6-11.8 GB and peak RAM about 7.3-8.4 GB while generating. Measured with Dynamic VRAM enabled and `--disable-pinned-memory`. Other GPUs, operating systems or models may give different speed and quality.
 
-### Measured on an RTX 3060 12GB
-
-Same image and prompt, 5 s at 1088x1920 with audio, seed 44 run after seed 43 (models already loaded), from ComfyUI's `execution_start` to `execution_success`.
-
-| Route | Seed 44 (models loaded) | For reference: RTX 4070 | Peak VRAM | Peak RAM |
-|---|---:|---:|---:|---:|
-| No conversion | 67.0 s | 35.7 s | 11.2 GB | 7.0 GB |
-| Fastest, Fused | 60.6 s | 32.3 s | 11.5 GB | 7.1 GB |
-
-The first run after starting ComfyUI (seed 43, including model loading) took 93.3 s for the no-conversion route and 64.4 s for Fused (including switching from the no-conversion model). Peak VRAM is the whole-GPU usage from `nvidia-smi`; peak RAM is the largest working set of the ComfyUI process. Neither video showed visual breakage; the audio was not listened to.
-
 Spark-H3 needs the Triton build that matches PyTorch (`triton-windows` on Windows; tested with 3.8.0.post28 for PyTorch 2.14). Without it, setup stops before changing anything.
 
 Spark-H3 0.2.0 officially supports ComfyUI 0.38-0.40 and 0.42-0.44. This repo was tested on 0.45.0 and worked.
@@ -98,6 +87,17 @@ This repo contains no custom nodes: only workflows, the converter and the setup 
 | [ComfyUI-piFlow](https://github.com/Lakonik/ComfyUI-piFlow) | Load LakonLab Adapter, pi-Flow Scheduler | commit `e0ca46f7a7dcd080d8ab1d759719e8bc046617f0` |
 | [Spark-H3](https://github.com/zechengtang/Spark-H3) | MiniMaxH3SparkAttentionSM86 / SM89 / SM120 | Release `comfyui-v0.2.0`, the Windows cu130 archive for your GPU generation (SHA-256 checked) |
 | [ComfyUI-H3-X2-Stream](https://github.com/sepiablue-ai/ComfyUI-H3-X2-Stream) | H3X2ChunkFeedForward, H3X2StreamSave, INT8 X2 VAE preparation | commit `e05e79ab3242abaafddd673e88e19c1824cd863c` |
+
+### Measured on an RTX 3060 12GB
+
+Same image and prompt, 5 s at 1088x1920 with audio, seed 44 run after seed 43 (models already loaded), from ComfyUI's `execution_start` to `execution_success`.
+
+| Route | Seed 44 (models loaded) | For reference: RTX 4070 | Peak VRAM | Peak RAM |
+|---|---:|---:|---:|---:|
+| No conversion | 67.0 s | 35.7 s | 11.2 GB | 7.0 GB |
+| Fastest, Fused | 60.6 s | 32.3 s | 11.5 GB | 7.1 GB |
+
+The first run after starting ComfyUI (seed 43, including model loading) took 93.3 s for the no-conversion route and 64.4 s for Fused (including switching from the no-conversion model). Peak VRAM is the whole-GPU usage from `nvidia-smi`; peak RAM is the largest working set of the ComfyUI process. Both videos were checked for picture and audio: no breakage or audio drift, and the quality was on par with the RTX 4070 outputs.
 
 ## Installation
 

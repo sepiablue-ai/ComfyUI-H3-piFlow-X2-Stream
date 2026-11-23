@@ -76,17 +76,6 @@ RTX 50シリーズ（SM120）用は、Spark-H3公式のSM120版アーカイブ�
 
 開発検証はRTX 4070 12GB、ComfyUI 0.45.0、Python 3.13.13、PyTorch 2.14.0+cu130、comfy-kitchen 0.2.41で行いました。生成時のPeak VRAMは約11.6〜11.8GB、Peak RAMは約7.3〜8.4GBでした。実測はDynamic VRAM有効、`--disable-pinned-memory`で行いました。他のGPU・OS・モデルで同じ速度や品質を保証するものではありません。
 
-### RTX 3060 12GBでの実測
-
-同じ画像・プロンプト、5秒・1088×1920・音声付き、seed43を流したあとのseed44（モデル読込済み）。ComfyUIの`execution_start`から`execution_success`まで。
-
-| ルート | seed44（モデル読込済み） | 参考：RTX 4070 | Peak VRAM | Peak RAM |
-|---|---:|---:|---:|---:|
-| 変換不要版 | 67.0秒 | 35.7秒 | 11.2GB | 7.0GB |
-| 最速版 Fused | 60.6秒 | 32.3秒 | 11.5GB | 7.1GB |
-
-ComfyUI起動直後の1本目（seed43、モデル読込込み）は変換不要版93.3秒、Fused 64.4秒（変換不要版からの切り替え読込を含む）でした。Peak VRAMは`nvidia-smi`のGPU全体の使用量、Peak RAMはComfyUIのプロセスの最大ワーキングセットです。2本とも映像に破綻はありませんでしたが、音声の試聴はしていません。
-
 Spark-H3にはPyTorchに合ったTriton（Windowsでは`triton-windows`。PyTorch 2.14では3.8.0.post28で検証）が必要です。入っていなければsetupは何も変更せずに止まります。
 
 Spark-H3 0.2.0の公式対応はComfyUI 0.38〜0.40、0.42〜0.44です。このrepoの検証は0.45.0で行い、問題なく動きました。
@@ -98,6 +87,17 @@ Spark-H3 0.2.0の公式対応はComfyUI 0.38〜0.40、0.42〜0.44です。この
 | [ComfyUI-piFlow](https://github.com/Lakonik/ComfyUI-piFlow) | Load LakonLab Adapter、pi-Flow Scheduler | commit `e0ca46f7a7dcd080d8ab1d759719e8bc046617f0` |
 | [Spark-H3](https://github.com/zechengtang/Spark-H3) | MiniMaxH3SparkAttentionSM86 / SM89 / SM120 | Release `comfyui-v0.2.0` のWindows cu130版から、GPUの世代に合うもの1つ（SHA-256確認） |
 | [ComfyUI-H3-X2-Stream](https://github.com/sepiablue-ai/ComfyUI-H3-X2-Stream) | H3X2ChunkFeedForward、H3X2StreamSave、X2 VAEのINT8化 | commit `e05e79ab3242abaafddd673e88e19c1824cd863c` |
+
+### RTX 3060 12GBでの実測
+
+同じ画像・プロンプト、5秒・1088×1920・音声付き、seed43を流したあとのseed44（モデル読込済み）。ComfyUIの`execution_start`から`execution_success`まで。
+
+| ルート | seed44（モデル読込済み） | 参考：RTX 4070 | Peak VRAM | Peak RAM |
+|---|---:|---:|---:|---:|
+| 変換不要版 | 67.0秒 | 35.7秒 | 11.2GB | 7.0GB |
+| 最速版 Fused | 60.6秒 | 32.3秒 | 11.5GB | 7.1GB |
+
+ComfyUI起動直後の1本目（seed43、モデル読込込み）は変換不要版93.3秒、Fused 64.4秒（変換不要版からの切り替え読込を含む）でした。Peak VRAMは`nvidia-smi`のGPU全体の使用量、Peak RAMはComfyUIのプロセスの最大ワーキングセットです。2本とも映像・音声を確認し、破綻や音ズレはなく、RTX 4070版と遜色ない品質でした。
 
 ## 導入
 
