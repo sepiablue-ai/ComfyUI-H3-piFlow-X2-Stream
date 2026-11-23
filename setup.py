@@ -87,7 +87,8 @@ def pip_install(*arguments):
 
 
 def find_model(folder_paths, folder, name):
-    matches = [item for item in folder_paths.get_filename_list(folder) if Path(item).name == name]
+    candidates = folder_paths.get_filename_list(folder)
+    matches = [name] if name in candidates else [item for item in candidates if Path(item).name == name]
     if len(matches) > 1:
         raise RuntimeError(f"Multiple copies of {name} in models/{folder}; keep one")
     return folder_paths.get_full_path_or_raise(folder, matches[0]) if matches else None

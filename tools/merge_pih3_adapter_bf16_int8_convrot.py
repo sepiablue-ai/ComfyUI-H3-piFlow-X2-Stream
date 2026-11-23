@@ -70,7 +70,8 @@ def model_paths(comfy_root, extra):
 
 
 def find_model(folder_paths, folder, name):
-    matches = [item for item in folder_paths.get_filename_list(folder) if Path(item).name == name]
+    candidates = folder_paths.get_filename_list(folder)
+    matches = [name] if name in candidates else [item for item in candidates if Path(item).name == name]
     if len(matches) != 1:
         raise FileNotFoundError(f"{name} {'is missing from' if not matches else 'has several copies in'} models/{folder}; pass its path explicitly")
     return Path(folder_paths.get_full_path_or_raise(folder, matches[0]))
