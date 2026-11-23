@@ -14,7 +14,7 @@ Workflows that combine [pi-H3](https://huggingface.co/Lakonik/pi-H3) (a pi-Flow 
 
 Side by side, left to right: official DWD, no-conversion route, fastest route (each scaled to 544x960 with lanczos and placed side by side, libx264 CRF 18, no audio):
 
-<!-- TODO: paste GitHub video asset URL (0_benchmark_side_by_side_dwd_dynamic_fused.mp4) -->
+https://github.com/user-attachments/assets/367163a0-8df1-431d-b9eb-704dfa5e3ff8
 
 Official pi-H3 DWD (189.0 s):
 
@@ -22,11 +22,11 @@ https://github.com/user-attachments/assets/8bc43e9c-f53b-4fb7-8b63-e52604603109
 
 No-conversion route, dynamic LoRA + X2 Stream (35.7 s):
 
-<!-- TODO: paste GitHub video asset URL (2_benchmark_dynamic_lora_35.7s_x264.mp4) -->
+https://github.com/user-attachments/assets/816c3464-dd00-4618-90ec-bb87635bc49a
 
 Fastest route, Fused + X2 Stream (32.3 s):
 
-<!-- TODO: paste GitHub video asset URL (3_benchmark_fused_32.3s_x264.mp4) -->
+https://github.com/user-attachments/assets/5247fbfd-5265-466f-8783-c6dc7d6e6a51
 
 The three videos use the same image, prompt and seed 44. The first is the official workflow's SaveVideo output (libx264, CRF 18) as is. The other two were saved by X2 Stream with NVENC (CQ 18, about 11 MB), which exceeds GitHub's upload limit, so they were re-encoded for display with the same libx264 CRF 18 as the first. Resolution, frame count and audio are unchanged (the audio is copied), and the re-encoded video differs from the original by PSNR 45.5 dB / SSIM 0.993. The official DWD and the 2-step routes are different models, so the motion differs.
 

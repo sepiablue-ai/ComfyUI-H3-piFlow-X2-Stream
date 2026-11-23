@@ -14,7 +14,7 @@
 
 横並び比較（左から公式DWD・変換不要版・最速版。各動画をlanczosで544×960に縮小して横に並べただけで、libx264 CRF 18、音声なし）：
 
-<!-- TODO: paste GitHub video asset URL（0_benchmark_side_by_side_dwd_dynamic_fused.mp4） -->
+https://github.com/user-attachments/assets/367163a0-8df1-431d-b9eb-704dfa5e3ff8
 
 公式 pi-H3 DWD（189.0秒）：
 
@@ -22,11 +22,11 @@ https://github.com/user-attachments/assets/8bc43e9c-f53b-4fb7-8b63-e52604603109
 
 変換不要版：動的LoRA + X2 Stream（35.7秒）：
 
-<!-- TODO: paste GitHub video asset URL（2_benchmark_dynamic_lora_35.7s_x264.mp4） -->
+https://github.com/user-attachments/assets/816c3464-dd00-4618-90ec-bb87635bc49a
 
 最速版：Fused + X2 Stream（32.3秒）：
 
-<!-- TODO: paste GitHub video asset URL（3_benchmark_fused_32.3s_x264.mp4） -->
+https://github.com/user-attachments/assets/5247fbfd-5265-466f-8783-c6dc7d6e6a51
 
 3本とも同じ画像・プロンプト・seed44です。1本目は公式ワークフローのSaveVideo（libx264、CRF 18）で保存したままです。2・3本目はX2 StreamのNVENC保存（CQ 18、約11MB）がGitHubのアップロード上限を超えるため、表示用に1本目と同じlibx264 CRF 18で再エンコードしました。解像度・フレーム数・音声は変えておらず（音声はコピー）、元の動画との差はPSNR 45.5dB・SSIM 0.993です。公式DWDと2stepの2ルートはモデルが違うため、動きも変わります。
 
