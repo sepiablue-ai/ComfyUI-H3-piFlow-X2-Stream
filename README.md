@@ -24,7 +24,7 @@ Measured on an RTX 4070 12GB with ComfyUI 0.45.0: same image, prompt and seed 44
 |---|---|---|
 | Workflow | [piH3_2step_dynamic_x2_5s.json](workflows/piH3_2step_dynamic_x2_5s.json) | [piH3_2step_fused_x2_5s.json](workflows/piH3_2step_fused_x2_5s.json) |
 | Diffusion model | Official `minimax_h3_fl2va_pruned_int8_convrot` (21.0 GB) + `pi_h3_2step_adapter` (503 MB) | `minimax_h3_fl2va_pruned_pih3_2step_fused_int8_convrot` (21.0 GB), built by the converter |
-| Preparation | Place the models | Run `convert_fused.bat` once (about 10 min plus the BF16 download) |
+| Preparation | Place the models | Run `convert_fused.bat` once (about 2.5 min plus the BF16 download) |
 | Temporary free space | None | 40.2 GB for the BF16 source + 21.0 GB output. The BF16 file can be deleted afterwards |
 | Picture and audio | Reference | By ear about the same as the no-conversion route. Composition and expression change slightly at the same seed |
 
@@ -114,7 +114,7 @@ convert_fused.bat "C:\ComfyUI\ComfyUI" "C:\ComfyUI\.venv\Scripts\python.exe" --d
 ```
 
 - **Free space**: 40.2 GB for the BF16 file (download folder) and 21.0 GB for the output (`models/diffusion_models`). Only 21.0 GB remains after the BF16 file is deleted.
-- **Time**: about 10 min of conversion on an RTX 4070, plus the 40.2 GB download.
+- **Time**: 147 s of conversion on an RTX 4070 with an NVMe SSD, plus the 40.2 GB download and a SHA-256 check (about 2 min). The converter process stays at about 2.7 GB of memory.
 - **Output**: `models/diffusion_models/minimax_h3_fl2va_pruned_pih3_2step_fused_int8_convrot.safetensors`
 - If you already have the BF16 file, pass `--bf16 PATH` (it is kept unless `--delete-bf16` is given). The official INT8 model and the adapter are found in `models`; use `--template`, `--adapter` and `--output` for other locations.
 - The download resumes after an interruption and is checked by SHA-256. CUDA and ComfyUI's Python (comfy-kitchen) are required.

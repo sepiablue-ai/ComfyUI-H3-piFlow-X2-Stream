@@ -24,7 +24,7 @@
 |---|---|---|
 | ワークフロー | [piH3_2step_dynamic_x2_5s.json](workflows/piH3_2step_dynamic_x2_5s.json) | [piH3_2step_fused_x2_5s.json](workflows/piH3_2step_fused_x2_5s.json) |
 | 拡散モデル | 公式 `minimax_h3_fl2va_pruned_int8_convrot`（21.0GB）＋ `pi_h3_2step_adapter`（503MB） | 変換で作る `minimax_h3_fl2va_pruned_pih3_2step_fused_int8_convrot`（21.0GB） |
-| 準備 | モデルを置くだけ | `convert_fused.bat`で1回変換（約10分＋BF16のダウンロード） |
+| 準備 | モデルを置くだけ | `convert_fused.bat`で1回変換（約2.5分＋BF16のダウンロード） |
 | 一時的に必要な空き容量 | なし | BF16元モデル40.2GB＋出力21.0GB。変換後にBF16は削除できます |
 | 画質・音声 | 基準 | 耳で聴くと変換不要版と大差なし。構図・表情は同じseedでも少し変わります |
 
@@ -114,7 +114,7 @@ convert_fused.bat "C:\ComfyUI\ComfyUI" "C:\ComfyUI\.venv\Scripts\python.exe" --d
 ```
 
 - **空き容量**：BF16用に40.2GB（ダウンロード先）、出力用に21.0GB（`models/diffusion_models`）。変換後にBF16を消すので、最終的に増えるのは21.0GBです。
-- **時間**：RTX 4070で変換は約10分です。ダウンロードは回線次第です（40.2GB）。
+- **時間**：RTX 4070・NVMe SSDで変換は147秒でした。ほかにダウンロード（40.2GB、回線次第）とSHA-256の確認（約2分）がかかります。変換プロセスのメモリは約2.7GBです。
 - **出力**：`models/diffusion_models/minimax_h3_fl2va_pruned_pih3_2step_fused_int8_convrot.safetensors`
 - BF16をすでに持っている場合は`--bf16 PATH`で指定します（`--delete-bf16`を付けなければ残ります）。公式INT8モデルとアダプターは`models`から自動で探します。別の場所は`--template`、`--adapter`、`--output`で指定できます。
 - ダウンロードは途中から再開でき、SHA-256を確認します。CUDAとComfyUIのPython（comfy-kitchen）が必要です。
