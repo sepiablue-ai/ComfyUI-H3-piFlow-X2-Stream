@@ -14,7 +14,7 @@
 
 公式 pi-H3 DWD（189.0秒）：
 
-<!-- TODO: paste GitHub video asset URL（1_benchmark_official_dwd_189s.mp4） -->
+https://github.com/user-attachments/assets/8bc43e9c-f53b-4fb7-8b63-e52604603109
 
 変換不要版：動的LoRA + X2 Stream（35.7秒）：
 

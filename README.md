@@ -14,7 +14,7 @@ Workflows that combine [pi-H3](https://huggingface.co/Lakonik/pi-H3) (a pi-Flow 
 
 Official pi-H3 DWD (189.0 s):
 
-<!-- TODO: paste GitHub video asset URL (1_benchmark_official_dwd_189s.mp4) -->
+https://github.com/user-attachments/assets/8bc43e9c-f53b-4fb7-8b63-e52604603109
 
 No-conversion route, dynamic LoRA + X2 Stream (35.7 s):
 
