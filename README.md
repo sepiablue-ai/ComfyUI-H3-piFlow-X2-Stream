@@ -136,7 +136,12 @@ Main settings: SigmaShift 12/3, Spark-H3 speed (top-k 20%, no warmup), pi-Flow S
 
 ## Validation
 
-<!-- Fresh-install validation results are added here after testing -->
+On 2026-11-23, installation and generation were checked from a separate clone of this repo on a freshly cloned ComfyUI 0.45.0 (commit dba377b9) with a new venv (Python 3.13.13, PyTorch 2.14.0+cu130, triton-windows 3.8.0.post28). Models were read from an existing folder through `extra_model_paths.yaml`.
+
+- `setup.bat --install-dependencies` fetched the three packs, installed the Spark-H3 SM89 wheel, and reported all nodes registered and the no-conversion route ready. Without Triton it stopped before changing anything.
+- `convert_fused.bat` downloaded the BF16 model (40.2 GB, SHA-256 matched) and converted it in 147 s with a peak of 2.7 GB of process memory. All 932 output tensors were identical to the fused model used for the benchmarks.
+- Both workflows were loaded in UI format and ran successfully. Seed 44 with models loaded: fastest route 32.1 s, no-conversion route 36.9 s (64.1 s on the first run, including model loading). Reruns in the same environment gave identical outputs; the difference from the benchmark environment's videos was PSNR 46.4 dB.
+- Deleting the BF16 file with `--delete-bf16` was not exercised in this test. The INT8 X2 VAE was already prepared, so `00_prepare_int8.json` was not run. Dragging in a browser was replaced by the workflow loading call (`loadGraphData`).
 
 ## Author and related repositories
 
