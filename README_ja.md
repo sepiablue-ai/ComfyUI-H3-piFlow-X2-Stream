@@ -12,7 +12,19 @@
 | **変換不要版**：動的LoRA + X2 Stream | **35.7秒** | 公式INT8モデルにアダプターを読み込むだけ |
 | **最速版**：Fused + X2 Stream | **32.3秒** | 事前マージしたモデルを1回だけ作る。プロンプトを毎回変える実運用では約44〜45秒 |
 
-<!-- TODO: paste GitHub video asset URL（3構成の比較動画） -->
+公式 pi-H3 DWD（189.0秒）：
+
+<!-- TODO: paste GitHub video asset URL（1_benchmark_official_dwd_189s.mp4） -->
+
+変換不要版：動的LoRA + X2 Stream（35.7秒）：
+
+<!-- TODO: paste GitHub video asset URL（2_benchmark_dynamic_lora_35.7s.mp4） -->
+
+最速版：Fused + X2 Stream（32.3秒）：
+
+<!-- TODO: paste GitHub video asset URL（3_benchmark_fused_32.3s.mp4） -->
+
+3本とも同じ画像・プロンプト・seed44で、生成したままの動画です。公式DWDと2stepの2ルートはモデルが違うため、動きも変わります。
 
 数値はRTX 4070 12GB、ComfyUI 0.45.0での実測です（同じ画像・プロンプト・seed44、モデル読込済みの2回目、ComfyUIの`execution_start`から`execution_success`まで）。プロンプトを変えるたびにテキストエンコーダーの条件付け（約8.6秒）が入り、サンプリングも約2.5秒延びるため、別シーン5本では44.2〜45.1秒でした。
 
@@ -32,11 +44,17 @@
 
 ## サンプル動画
 
-<!-- TODO: paste GitHub video asset URL（洋楽を歌う） -->
+洋楽を歌う（最速版・5秒・seed44）：
 
-<!-- TODO: paste GitHub video asset URL（海辺を走る） -->
+<!-- TODO: paste GitHub video asset URL（4_sample_english_song.mp4） -->
 
-<!-- TODO: paste GitHub video asset URL（剣で斬り込む：高速アクションの崩れの例） -->
+海辺を走る：
+
+<!-- TODO: paste GitHub video asset URL（5_sample_beach_run.mp4） -->
+
+剣で斬り込む（高速な動きでブロック状に崩れる例）：
+
+<!-- TODO: paste GitHub video asset URL（6_sample_sword_attack.mp4） -->
 
 ## 得意・不得意
 

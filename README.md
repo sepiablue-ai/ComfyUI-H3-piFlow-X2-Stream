@@ -12,7 +12,19 @@ Workflows that combine [pi-H3](https://huggingface.co/Lakonik/pi-H3) (a pi-Flow 
 | **No-conversion route**: dynamic LoRA + X2 Stream | **35.7 s** | Loads the adapter onto the official INT8 model |
 | **Fastest route**: Fused + X2 Stream | **32.3 s** | Build a pre-merged model once. About 44-45 s in practice when the prompt changes every run |
 
-<!-- TODO: paste GitHub video asset URL (comparison of the three setups) -->
+Official pi-H3 DWD (189.0 s):
+
+<!-- TODO: paste GitHub video asset URL (1_benchmark_official_dwd_189s.mp4) -->
+
+No-conversion route, dynamic LoRA + X2 Stream (35.7 s):
+
+<!-- TODO: paste GitHub video asset URL (2_benchmark_dynamic_lora_35.7s.mp4) -->
+
+Fastest route, Fused + X2 Stream (32.3 s):
+
+<!-- TODO: paste GitHub video asset URL (3_benchmark_fused_32.3s.mp4) -->
+
+The three videos use the same image, prompt and seed 44 and are shown as generated. The official DWD and the 2-step routes are different models, so the motion differs.
 
 Measured on an RTX 4070 12GB with ComfyUI 0.45.0: same image, prompt and seed 44, second run with the models already loaded, from ComfyUI's `execution_start` to `execution_success`. A new prompt adds the text-encoder conditioning (about 8.6 s) and makes sampling about 2.5 s longer, so five other scenes took 44.2-45.1 s each.
 
@@ -32,11 +44,17 @@ Start with the no-conversion route if unsure. The fastest route can be added to 
 
 ## Sample videos
 
-<!-- TODO: paste GitHub video asset URL (English song) -->
+Singing an English song (fastest route, 5 s, seed 44):
 
-<!-- TODO: paste GitHub video asset URL (running on the beach) -->
+<!-- TODO: paste GitHub video asset URL (4_sample_english_song.mp4) -->
 
-<!-- TODO: paste GitHub video asset URL (sword attack: example of fast-motion artifacts) -->
+Running on a beach:
+
+<!-- TODO: paste GitHub video asset URL (5_sample_beach_run.mp4) -->
+
+Sword attack (example of block artifacts during fast motion):
+
+<!-- TODO: paste GitHub video asset URL (6_sample_sword_attack.mp4) -->
 
 ## Strengths and weaknesses
 
