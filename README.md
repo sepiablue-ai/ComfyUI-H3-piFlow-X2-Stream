@@ -60,7 +60,7 @@ Five other scenes (5 s, seed 44) were generated with the fastest route and revie
 
 - **Good at**: close-ups of people, slow motion, English singing and speech, instrument sounds.
 - **Weak at**: fast action such as a sword swing (2 steps do not interpolate enough in time, so details briefly break into blocks), Japanese singing and speech (syllable slips, slight doubled voice).
-- **14 s or longer is not recommended**: the same 2-step setup at 14 s (345 frames) was rated NG by ear for both seeds (muffled and doubled audio). The workflows target 5 s (124 frames).
+- **Longer than 5 s is not recommended**: only 5 s (124 frames) and 14 s (345 frames) were tested. At 14 s the same 2-step setup was rated NG by ear for both seeds (muffled and doubled audio); lengths between 5 and 14 s are untested. The workflows target 5 s.
 
 ## Requirements
 
@@ -138,7 +138,7 @@ The 50 layers without LoRA matched the official INT8 weights to 99.9999%, which 
 1. Drag [piH3_2step_dynamic_x2_5s.json](workflows/piH3_2step_dynamic_x2_5s.json) (no conversion) or [piH3_2step_fused_x2_5s.json](workflows/piH3_2step_fused_x2_5s.json) (fastest) into ComfyUI. API versions are in [workflows/api](workflows/api).
 2. Choose an image in LoadImage and edit the prompt in MiniMaxH3ImageToVideo.
 3. ImageScale (lanczos, crop=center) fits the image to 544x960. Images with another aspect ratio are center-cropped (a 1248x1824 image loses about 17% of its width in total). To change the resolution, set the same multiples of 32 in ImageScale and MiniMaxH3ImageToVideo.
-4. `length` sets the duration (5 s = 124 frames). 14 s or longer is not recommended ([Strengths and weaknesses](#strengths-and-weaknesses)).
+4. `length` sets the duration (5 s = 124 frames). Longer than 5 s is not recommended ([Strengths and weaknesses](#strengths-and-weaknesses)).
 
 Main settings: SigmaShift 12/3, Spark-H3 speed (top-k 20%, no warmup), pi-Flow Scheduler 2 steps (max_raw_t 0.93, final_step_size_scale 0.6), euler, H3X2ChunkFeedForward chunks=0, 24 fps, NVENC CQ18. Output goes to ComfyUI's output/H3_piFlow_X2_Stream.
 

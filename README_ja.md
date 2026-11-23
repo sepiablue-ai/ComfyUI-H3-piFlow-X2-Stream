@@ -60,7 +60,7 @@ https://github.com/user-attachments/assets/5247fbfd-5265-466f-8783-c6dc7d6e6a51
 
 - **得意**：人物のアップ、ゆっくりした動き、英語の歌・セリフ、楽器演奏の音。
 - **不得意**：剣の振り抜きのような高速アクション（2stepでは時間方向の補間が足りず、一時的にブロック状に崩れる）、日本語の歌・セリフ（音節のずれ、軽い二重音声）。
-- **14秒以上は非推奨**：同じ2stepを14秒（345フレーム）で試すと、試聴で両seedとも音声がこもる・二重になる NG でした。5秒（124フレーム）での利用を想定しています。
+- **5秒より長い動画は非推奨**：検証したのは5秒（124フレーム）と14秒（345フレーム）だけです。同じ2stepを14秒で試すと、試聴で両seedとも音声がこもる・二重になる NG でした。5秒と14秒の間の長さは未検証です。5秒（124フレーム）での利用を想定しています。
 
 ## 必要な環境
 
@@ -138,7 +138,7 @@ LoRAの当たらない50層は、公式INT8と99.9999%一致しました（公�
 1. [piH3_2step_dynamic_x2_5s.json](workflows/piH3_2step_dynamic_x2_5s.json)（変換不要版）か[piH3_2step_fused_x2_5s.json](workflows/piH3_2step_fused_x2_5s.json)（最速版）をComfyUIへドラッグします。API版は[workflows/api](workflows/api)です。
 2. LoadImageで画像を選び、MiniMaxH3ImageToVideoのプロンプトを変更します。
 3. 画像はImageScale（lanczos、crop=center）で544×960に合わせます。縦横比が違う画像は中央で切り抜かれます（例：1248×1824の画像は横幅の約17%が切れます。左右それぞれ約8.6%）。解像度を変える場合は、ImageScaleとMiniMaxH3ImageToVideoのwidth・heightを同じ32の倍数にします。
-4. 長さは`length`（5秒＝124フレーム）です。14秒以上は非推奨です（[得意・不得意](#得意不得意)）。
+4. 長さは`length`（5秒＝124フレーム）です。5秒より長い動画は非推奨です（[得意・不得意](#得意不得意)）。
 
 主な設定：SigmaShift 12/3、Spark-H3 speed（topk 20%、warmup 0）、pi-Flow Scheduler 2step（max_raw_t 0.93、final_step_size_scale 0.6）、euler、H3X2ChunkFeedForward chunks=0、24fps、NVENC CQ18。保存先はComfyUIのoutput/H3_piFlow_X2_Streamです。
 
