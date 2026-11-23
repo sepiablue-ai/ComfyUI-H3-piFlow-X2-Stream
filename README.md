@@ -12,6 +12,10 @@ Workflows that combine [pi-H3](https://huggingface.co/Lakonik/pi-H3) (a pi-Flow 
 | **No-conversion route**: dynamic LoRA + X2 Stream | **35.7 s** | Loads the adapter onto the official INT8 model |
 | **Fastest route**: Fused + X2 Stream | **32.3 s** | Build a pre-merged model once. About 44-45 s in practice when the prompt changes every run |
 
+Side by side, left to right: official DWD, no-conversion route, fastest route (each scaled to 544x960 with lanczos and placed side by side, libx264 CRF 18, no audio):
+
+<!-- TODO: paste GitHub video asset URL (0_benchmark_side_by_side_dwd_dynamic_fused.mp4) -->
+
 Official pi-H3 DWD (189.0 s):
 
 https://github.com/user-attachments/assets/8bc43e9c-f53b-4fb7-8b63-e52604603109

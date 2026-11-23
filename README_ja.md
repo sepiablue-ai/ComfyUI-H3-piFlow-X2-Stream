@@ -12,6 +12,10 @@
 | **変換不要版**：動的LoRA + X2 Stream | **35.7秒** | 公式INT8モデルにアダプターを読み込むだけ |
 | **最速版**：Fused + X2 Stream | **32.3秒** | 事前マージしたモデルを1回だけ作る。プロンプトを毎回変える実運用では約44〜45秒 |
 
+横並び比較（左から公式DWD・変換不要版・最速版。各動画をlanczosで544×960に縮小して横に並べただけで、libx264 CRF 18、音声なし）：
+
+<!-- TODO: paste GitHub video asset URL（0_benchmark_side_by_side_dwd_dynamic_fused.mp4） -->
+
 公式 pi-H3 DWD（189.0秒）：
 
 https://github.com/user-attachments/assets/8bc43e9c-f53b-4fb7-8b63-e52604603109
